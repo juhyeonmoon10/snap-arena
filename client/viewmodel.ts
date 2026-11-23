@@ -1,7 +1,7 @@
 // 1인칭 손·장비 연출. 키프레임 클립을 상태 기계로 재생하고,
 // 동작이 바뀔 때는 "지금 자세"에서 새 클립으로 짧게 블렌딩해 튀지 않게 한다.
 import * as THREE from 'three';
-import { WEAPONS, GunCfg, TEAM_COLORS } from '../shared/config';
+import { WEAPONS, GunCfg, TEAM_UNIFORM as TEAM_COLORS } from '../shared/config';
 import { makeHand, makeForearm, makeKnife, makeKarambit, makeBalisong, makeGun, Hand, GunModel } from './models';
 
 // 자세 채널: 0-2 팔 위치, 3-5 팔 회전(YXZ), 6-8 손목 회전, 9-13 손가락(검지,중지,약지,새끼,엄지), 14-16 장비 전용
@@ -194,7 +194,7 @@ function gunRig(id: string, sleeve: number): Rig {
   const actHome = m.action ? m.action.position.clone() : null;
   const muzzle = new THREE.Group(); muzzle.position.copy(m.muzzle); g.add(muzzle);
   const primary = cfg.slot === 0;
-  const idle = primary ? P(0.15, -0.15, -0.47, 0, 0.05, 0) : P(0.15, -0.14, -0.46, 0, 0.04, 0);
+  const idle = primary ? P(0.17, -0.175, -0.6, 0, 0.06, 0) : P(0.16, -0.15, -0.5, 0, 0.05, 0);
   const apply = (p: Pose) => {
     g.position.set(p[0], p[1], p[2]); g.rotation.set(p[3], p[4], p[5]);
     if (m.mag) m.mag.position.set(magHome.x, magHome.y - p[14] * 0.24, magHome.z);
@@ -280,9 +280,9 @@ export class ViewModel {
   private flashT = 0;
 
   constructor() {
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b8d0, 2.1));
-    const d = new THREE.DirectionalLight(0xffffff, 1.6); d.position.set(-1, 2, 1.5); this.scene.add(d);
-    this.flash = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), new THREE.MeshBasicMaterial({ color: 0xfff1a0, transparent: true, opacity: 0.95 }));
+    this.scene.add(new THREE.HemisphereLight(0xdfe8f2, 0x5a5348, 1.1));
+    const d = new THREE.DirectionalLight(0xffe2bd, 2.2); d.position.set(-1, 2, 1.5); this.scene.add(d);
+    this.flash = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), new THREE.MeshBasicMaterial({ color: 0xffd28a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.flash.visible = false; this.scene.add(this.flash);
   }
   setTeam(team: number) { if (this.sleeve !== TEAM_COLORS[team]) { this.sleeve = TEAM_COLORS[team]; this.rigs.clear(); if (this.rig) { const id = this.rig.id; this.scene.remove(this.rig.root); this.rig = null; this.equip(id, false); } } }

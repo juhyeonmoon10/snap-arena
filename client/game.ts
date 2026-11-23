@@ -8,11 +8,12 @@ import { buildWorld } from './world';
 import { makeAvatar, Avatar, box } from './models';
 import { ViewModel } from './viewmodel';
 import { Sfx } from './audio';
+import { LOW } from './fx';
 
 interface Remote {
   info: PlayerInfo; av: Avatar; buf: { t: number; x: number; y: number; z: number; yaw: number; pitch: number }[];
   hp: number; alive: boolean; slot: number; wid: string; walk: number; swing: number; kick: number; inspect: number;
-  pos: THREE.Vector3; yaw: number; pitch: number; tag: THREE.Sprite | null;
+  pos: THREE.Vector3; yaw: number; pitch: number; tag: THREE.Sprite | null; dead: number;
 }
 interface Particle { m: THREE.Mesh; v: THREE.Vector3; life: number; max: number; grav: number; spin: number }
 const $ = (id: string) => document.getElementById(id)!;
@@ -54,12 +55,14 @@ export class Game {
 
   constructor(private canvas: HTMLCanvasElement, public socket: Socket, public sfx: Sfx) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    const low = new URLSearchParams(location.search).get('fx') === 'low'; // 느린 기기용: 그림자 끔, 해상도 절반
+    const low = LOW; // 느린 기기용: 그림자 끔, 해상도 절반, 가벼운 재질
     this.renderer.setPixelRatio(low ? 0.5 : Math.min(devicePixelRatio, 1.5));
     this.renderer.shadowMap.enabled = !low; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.autoClear = false;
     this.camera.rotation.order = 'YXZ';
-    buildWorld(this.scene);
+    this.renderer.toneMapping = LOW ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.05;
+    buildWorld(this.scene, this.renderer);
+    this.vm.scene.environment = this.scene.environment; this.vm.scene.environmentIntensity = 0.5;
     this.vm.onCue = (name) => this.sfx.play(name);
     this.resize(); addEventListener('resize', () => this.resize());
     this.bindInput();
@@ -127,7 +130,7 @@ export class Game {
       let r = this.remotes.get(p.id);
       if (!r) {
         const av = makeAvatar(p.team); av.root.visible = false; this.scene.add(av.root);
-        r = { info: p, av, buf: [], hp: 100, alive: true, slot: 0, wid: '', walk: 0, swing: 9, kick: 0, inspect: 0, pos: new THREE.Vector3(), yaw: 0, pitch: 0, tag: null };
+        r = { info: p, av, buf: [], hp: 100, alive: true, slot: 0, wid: '', walk: 0, swing: 9, kick: 0, inspect: 0, pos: new THREE.Vector3(), yaw: 0, pitch: 0, tag: null, dead: 0 };
         this.remotes.set(p.id, r);
       }
       r.info = p;
@@ -224,7 +227,7 @@ export class Game {
     } else if (e.k === 'hit') {
       const pos = new THREE.Vector3(e.pos[0], e.pos[1], e.pos[2]);
       const vic = this.room?.players.find((p) => p.id === e.vic);
-      this.burst(pos, e.kill ? 0 : 6, TEAM_COLORS[vic?.team ?? 0]);
+      this.burst(pos, 5, 0xb9b3a6, 0.55); // 피 대신 옷감·먼지가 튄다
       if (e.att === my) {
         this.hitT = e.kill ? 0.3 : 0.16;
         const hm = $('hitmarker'); hm.className = e.kill ? 'kill' : e.head ? 'head' : 'hit'; void hm.offsetWidth; hm.classList.add('on');
@@ -239,7 +242,7 @@ export class Game {
       if (e.kill) {
         const r = this.remotes.get(e.vic);
         const at = r ? r.pos.clone().setY(r.pos.y + 1) : pos;
-        this.popOut(at, TEAM_COLORS[vic?.team ?? 0]);
+        this.burst(at, 8, 0xb9b3a6, 0.6);
         this.sfx.play('pop', e.att === my ? 1 : this.falloff(at));
         const att = this.room?.players.find((p) => p.id === e.att);
         const li = document.createElement('li');
@@ -298,7 +301,7 @@ export class Game {
       if (t === Infinity) { t = 80; wall = false; }
       const end = new THREE.Vector3(o[0] + dir[0] * t, o[1] + dir[1] * t, o[2] + dir[2] * t);
       this.tracer(from, end);
-      if (wall) this.burst(end, 2, 0xffffff, 0.5);
+      if (wall) this.burst(end, 3, 0x8c8a84, 0.6);
     }
   }
   private muzzleWorldPos() {
@@ -311,23 +314,14 @@ export class Game {
   private tracer(a: THREE.Vector3, b: THREE.Vector3) {
     const len = a.distanceTo(b); if (len < 0.5) return;
     const m = new THREE.Mesh(tracerGeo, tracerMat.clone());
-    m.position.copy(a).lerp(b, 0.5); m.scale.set(0.035, 0.035, len); m.lookAt(b);
-    this.scene.add(m); this.tracers.push({ m, life: 0.09 });
+    m.position.copy(a).lerp(b, 0.5); m.scale.set(0.018, 0.018, len); m.lookAt(b);
+    this.scene.add(m); this.tracers.push({ m, life: 0.06 });
   }
   private burst(pos: THREE.Vector3, n: number, color: number, speed = 1) {
-    const cols = [color, 0xffffff, 0xffd23f];
+    const cols = [color, 0x6e6b66, 0xffc27a];
     for (let i = 0; i < n; i++) {
-      const m = box(0.07, 0.07, 0.07, cols[i % 3]); m.position.copy(pos); this.scene.add(m);
+      const sz = 0.025 + Math.random() * 0.03; const m = box(sz, sz, sz, cols[i % 3]); m.position.copy(pos); this.scene.add(m);
       this.parts.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 4 + 1, (Math.random() - 0.5) * 5).multiplyScalar(speed), life: 0.45, max: 0.45, grav: 12, spin: Math.random() * 10 });
-    }
-  }
-  /** 탈락 연출: 피 대신 블록과 색종이로 팡 터진다 */
-  private popOut(pos: THREE.Vector3, color: number) {
-    const cols = [color, color, 0xffffff, 0xffd23f, 0x26304f];
-    for (let i = 0; i < 22; i++) {
-      const s = 0.1 + Math.random() * 0.16;
-      const m = box(s, s, s, cols[i % 5]); m.position.copy(pos).add(new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.9, (Math.random() - 0.5) * 0.4)); this.scene.add(m);
-      this.parts.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 7, Math.random() * 6 + 2, (Math.random() - 0.5) * 7), life: 1.1, max: 1.1, grav: 16, spin: Math.random() * 14 });
     }
   }
   private updateFx(dt: number) {
@@ -341,7 +335,7 @@ export class Game {
     }
     for (let i = this.tracers.length - 1; i >= 0; i--) {
       const t = this.tracers[i]; t.life -= dt;
-      (t.m.material as THREE.MeshBasicMaterial).opacity = Math.max(0, t.life / 0.09) * 0.9;
+      (t.m.material as THREE.MeshBasicMaterial).opacity = Math.max(0, t.life / 0.06) * 0.7;
       if (t.life <= 0) { this.scene.remove(t.m); this.tracers.splice(i, 1); }
     }
   }
@@ -349,9 +343,17 @@ export class Game {
     const rt = this.offset === null ? 0 : performance.now() + this.offset - 100;
     for (const r of this.remotes.values()) {
       const b = r.buf;
-      const show = this.inMatch && r.alive && b.length > 0;
+      const show = this.inMatch && b.length > 0;
       r.av.root.visible = show;
       if (!show) continue;
+      if (!r.alive) { // 탈락: 그 자리에 쓰러져 라운드가 끝날 때까지 남는다
+        r.dead = Math.min(1, r.dead + dt / 0.5);
+        const k = r.dead * r.dead;
+        r.av.root.rotation.x = k * 1.5; r.av.root.position.y = r.pos.y + k * 0.16;
+        r.av.armR.rotation.x = 0.4; r.av.armL.rotation.x = -0.3; r.av.legL.rotation.x = 0.15; r.av.legR.rotation.x = -0.1;
+        continue;
+      }
+      r.dead = 0; r.av.root.rotation.x = 0;
       let a = b[0], c = b[0];
       for (let i = b.length - 1; i >= 0; i--) if (b[i].t <= rt) { a = b[i]; c = b[Math.min(i + 1, b.length - 1)]; break; }
       const k = c.t > a.t ? Math.min(1.2, (rt - a.t) / (c.t - a.t)) : 0;
@@ -507,14 +509,14 @@ export class Game {
 }
 
 const tracerGeo = new THREE.BoxGeometry(1, 1, 1);
-const tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff3a0, transparent: true, opacity: 0.9 });
+const tracerMat = new THREE.MeshBasicMaterial({ color: 0xffe6b0, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
 function esc(s: string) { return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`); }
 function nameTag(name: string, color: number) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 64;
   const g = c.getContext('2d')!;
-  g.font = '34px Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.lineWidth = 8; g.strokeStyle = '#1b2340'; g.strokeText('▼ ' + name, 128, 32);
-  g.fillStyle = '#' + color.toString(16).padStart(6, '0'); g.fillStyle = '#ffffff'; g.fillText('▼ ' + name, 128, 32);
+  g.font = '600 32px "Barlow Condensed", "Malgun Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText('▼ ' + name, 128, 32);
+  g.fillStyle = '#' + color.toString(16).padStart(6, '0'); g.fillText('▼ ' + name, 128, 32);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
   s.scale.set(1.8, 0.45, 1); s.renderOrder = 10;
   return s;

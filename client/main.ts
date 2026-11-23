@@ -1,4 +1,5 @@
-import '@fontsource/jua';
+import '@fontsource/barlow-condensed/500.css';
+import '@fontsource/barlow-condensed/700.css';
 import './style.css';
 import { io } from 'socket.io-client';
 import { WEAPONS, SLOT_OPTIONS, SLOT_NAMES, Loadout, DEFAULT_LOADOUT, TEAM_NAMES, RULES } from '../shared/config';
@@ -28,9 +29,6 @@ let roomCode = sessionStorage.getItem('snap.room') ?? '';
 let mode: Mode = '1v1';
 let myLoadout: Loadout = store.get('snap.loadout', DEFAULT_LOADOUT);
 const urlCode = (new URLSearchParams(location.search).get('room') ?? '').toUpperCase();
-
-// ---------- 로고 ----------
-for (const [id, word] of [['logo1', 'SNAP'], ['logo2', 'ARENA']]) $(id).innerHTML = [...word].map((c) => `<b aria-hidden="true">${c}</b>`).join('');
 
 // ---------- 공통 ----------
 let toastT = 0;

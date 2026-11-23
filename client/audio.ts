@@ -38,18 +38,19 @@ export class Sfx {
     const T = this.tone.bind(this), Nz = this.noise.bind(this);
     switch (name) {
       // 총기별 발사음: 음 높이와 길이, 잡음 색으로 구분
-      case 'shot_ar': Nz(0.11, 0.5, 'bandpass', 1500, 0.8, 500, 0, g); T(210, 0.09, 0.45, 'triangle', 80, 0, g); break;
-      case 'shot_smg': Nz(0.06, 0.4, 'bandpass', 2600, 1.2, 1200, 0, g); T(340, 0.05, 0.3, 'square', 160, 0, g * 0.6); break;
-      case 'shot_shotgun': Nz(0.3, 0.75, 'lowpass', 2400, 0.5, 200, 0, g); T(120, 0.22, 0.6, 'sine', 40, 0, g); break;
-      case 'shot_sniper': Nz(0.45, 0.6, 'bandpass', 900, 0.6, 150, 0, g); T(900, 0.12, 0.35, 'sawtooth', 90, 0, g); T(70, 0.4, 0.5, 'sine', 35, 0, g); break;
-      case 'shot_pistol': Nz(0.07, 0.4, 'bandpass', 2000, 1, 900, 0, g); T(520, 0.06, 0.35, 'triangle', 200, 0, g); break;
-      case 'shot_revolver': Nz(0.2, 0.6, 'bandpass', 1100, 0.7, 300, 0, g); T(260, 0.18, 0.55, 'triangle', 60, 0, g); break;
-      case 'hit': T(1700, 0.05, 0.3, 'square', 1700, 0, g * 0.5); break;
-      case 'head': T(2300, 0.05, 0.3, 'square'); T(3100, 0.07, 0.3, 'square', 3100, 0.05); break;
-      case 'kill': T(660, 0.09, 0.35, 'triangle'); T(880, 0.09, 0.35, 'triangle', 880, 0.08); T(1320, 0.2, 0.35, 'triangle', 1320, 0.16); Nz(0.12, 0.3, 'highpass', 3000); break;
-      case 'pop': Nz(0.1, 0.45, 'bandpass', 900, 2, 2400, 0, g); T(300, 0.12, 0.4, 'sine', 900, 0, g); break;
+      // 총성: 날카로운 파열음 + 저음 타격 + 벽에 번지는 꼬리. 총마다 무게와 길이가 다르다
+      case 'shot_ar': Nz(0.05, 0.8, 'highpass', 1800, 0.7, 900, 0, g); T(150, 0.11, 0.7, 'sine', 48, 0, g); Nz(0.32, 0.3, 'lowpass', 1600, 0.5, 260, 0.02, g); break;
+      case 'shot_smg': Nz(0.035, 0.6, 'highpass', 2600, 0.7, 1400, 0, g); T(210, 0.06, 0.45, 'sine', 80, 0, g); Nz(0.16, 0.2, 'lowpass', 2200, 0.5, 500, 0.015, g); break;
+      case 'shot_shotgun': Nz(0.09, 1.0, 'lowpass', 3200, 0.5, 500, 0, g); T(95, 0.26, 0.95, 'sine', 30, 0, g); Nz(0.6, 0.42, 'lowpass', 1100, 0.5, 140, 0.03, g); break;
+      case 'shot_sniper': Nz(0.06, 1.0, 'highpass', 1400, 0.6, 500, 0, g); T(110, 0.3, 1.0, 'sine', 28, 0, g); Nz(0.95, 0.45, 'lowpass', 1300, 0.5, 110, 0.03, g); T(2400, 0.05, 0.12, 'sine', 700, 0, g); break;
+      case 'shot_pistol': Nz(0.04, 0.7, 'highpass', 2000, 0.7, 1000, 0, g); T(180, 0.08, 0.55, 'sine', 60, 0, g); Nz(0.22, 0.22, 'lowpass', 1800, 0.5, 320, 0.02, g); break;
+      case 'shot_revolver': Nz(0.06, 0.9, 'highpass', 1500, 0.6, 600, 0, g); T(125, 0.2, 0.85, 'sine', 36, 0, g); Nz(0.5, 0.36, 'lowpass', 1400, 0.5, 170, 0.03, g); break;
+      case 'hit': Nz(0.03, 0.35, 'bandpass', 3200, 3, 2200, 0, g); T(900, 0.03, 0.12, 'sine', 600, 0, g); break;
+      case 'head': Nz(0.03, 0.4, 'bandpass', 4200, 4, 3000); T(1500, 0.07, 0.22, 'sine', 1100); break;
+      case 'kill': Nz(0.04, 0.45, 'bandpass', 3000, 3, 1800); T(520, 0.12, 0.3, 'sine', 300); T(260, 0.2, 0.3, 'sine', 180, 0.05); break;
+      case 'pop': T(90, 0.22, 0.6, 'sine', 45, 0.12, g); Nz(0.18, 0.3, 'lowpass', 500, 0.7, 180, 0.12, g); break; // 쓰러지는 소리
       case 'hurt': T(150, 0.14, 0.55, 'sine', 70); Nz(0.06, 0.25, 'lowpass', 600); break;
-      case 'out': T(520, 0.4, 0.4, 'triangle', 110); T(390, 0.45, 0.25, 'sine', 80, 0.05); break;
+      case 'out': T(180, 0.5, 0.45, 'sine', 50); Nz(0.5, 0.2, 'lowpass', 700, 0.6, 120); break;
       case 'swing': Nz(0.16, 0.3, 'bandpass', 700, 1.5, 2600, 0, g); break;
       case 'meleeHit': T(190, 0.09, 0.6, 'square', 90); Nz(0.05, 0.4, 'highpass', 2500); break;
       case 'draw': Nz(0.09, 0.14, 'bandpass', 2400, 1, 3800); break;
@@ -68,12 +69,12 @@ export class Sfx {
       case 'dry': T(1200, 0.02, 0.15, 'square'); break;
       case 'ui': T(880, 0.04, 0.15, 'triangle', 1100); break;
       case 'ready': T(660, 0.07, 0.25, 'triangle'); T(990, 0.1, 0.25, 'triangle', 990, 0.07); break;
-      case 'beep': T(700, 0.09, 0.25, 'square', 700, 0, 0.5); break;
-      case 'go': T(1050, 0.25, 0.3, 'square', 1050, 0, 0.5); break;
-      case 'roundWin': [523, 659, 784].forEach((f, i) => T(f, 0.16, 0.3, 'triangle', f, i * 0.09)); break;
-      case 'roundLose': [440, 370, 294].forEach((f, i) => T(f, 0.2, 0.28, 'triangle', f, i * 0.11)); break;
-      case 'matchWin': [523, 659, 784, 1047, 784, 1047].forEach((f, i) => T(f, 0.2, 0.32, 'triangle', f, i * 0.12)); break;
-      case 'matchLose': [392, 349, 311, 262].forEach((f, i) => T(f, 0.3, 0.3, 'triangle', f, i * 0.16)); break;
+      case 'beep': T(620, 0.07, 0.2, 'sine'); break;
+      case 'go': T(930, 0.3, 0.25, 'sine'); break;
+      case 'roundWin': T(392, 0.22, 0.22, 'sine'); T(587, 0.4, 0.22, 'sine', 587, 0.14); break;
+      case 'roundLose': T(330, 0.22, 0.22, 'sine'); T(220, 0.45, 0.22, 'sine', 220, 0.14); break;
+      case 'matchWin': [392, 494, 587, 784].forEach((f, i) => T(f, 0.5, 0.2, 'sine', f, i * 0.16)); break;
+      case 'matchLose': [330, 294, 247, 196].forEach((f, i) => T(f, 0.5, 0.2, 'sine', f, i * 0.18)); break;
     }
   }
 }
