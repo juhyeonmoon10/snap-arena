@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SNAP ARENA</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='9' width='26' height='20' rx='3' fill='%23ffd23f' stroke='%231b2340' stroke-width='3'/><rect x='7' y='3' width='7' height='7' rx='2' fill='%23ffd23f' stroke='%231b2340' stroke-width='3'/><rect x='18' y='3' width='7' height='7' rx='2' fill='%23ffd23f' stroke='%231b2340' stroke-width='3'/></svg>" />
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud">
+  <div id="hudTop">
+    <div class="team a"><div class="alive" id="aliveA"></div><b id="scoreA">0</b></div>
+    <div id="timer">0:45</div>
+    <div class="team b"><b id="scoreB">0</b><div class="alive" id="aliveB"></div></div>
+  </div>
+  <div id="crosshair"><i></i><i></i><i></i><i></i><u></u></div>
+  <div id="hitmarker"></div>
+  <div id="dmgdir"></div>
+  <div id="hurt"></div>
+  <div id="scope"></div>
+  <div id="banner"></div>
+  <div id="bannerSub"></div>
+  <div id="spectate"></div>
+  <ul id="feed"></ul>
+  <div id="hpBox"><div id="hpTrack"><div id="hpBar"></div></div><b id="hp">100</b></div>
+  <div id="gear">
+    <div id="ammoBox"><b id="ammo">30</b><span id="ammoMax">/ 30</span></div>
+    <div id="wname"></div>
+    <div id="slots">
+      <div class="slot" id="slot0"><kbd>1</kbd><span></span></div>
+      <div class="slot" id="slot1"><kbd>2</kbd><span></span></div>
+      <div class="slot" id="slot2"><kbd>3</kbd><span></span></div>
+    </div>
+  </div>
+</div>
+
+<main id="home" class="screen">
+  <h1 class="logo" aria-label="SNAP ARENA"><span class="row" id="logo1"></span><span class="row" id="logo2"></span></h1>
+  <p class="tagline">링크 하나로 친구와 붙는 장난감 아레나 대전</p>
+  <section class="panel">
+    <label for="nick">닉네임</label>
+    <input id="nick" maxlength="12" autocomplete="off" placeholder="12자까지" />
+    <div id="inviteBox" hidden>
+      <p>초대받은 방 <b id="inviteCode"></b></p>
+      <button class="btn primary" id="joinInvite">이 방에 입장</button>
+    </div>
+    <div id="createBox">
+      <div class="seg" role="radiogroup" aria-label="대전 인원">
+        <button role="radio" aria-checked="true" data-mode="1v1">1 대 1</button>
+        <button role="radio" aria-checked="false" data-mode="2v2">2 대 2</button>
+      </div>
+      <button class="btn primary" id="create">비공개 방 만들기</button>
+      <form id="joinForm">
+        <input id="code" maxlength="5" autocomplete="off" placeholder="방 코드" aria-label="방 코드" />
+        <button class="btn" type="submit">코드로 입장</button>
+      </form>
+    </div>
+    <div class="row2">
+      <button class="btn ghost" id="practice">혼자 연습장 열기</button>
+      <button class="btn ghost" id="openSettings">설정</button>
+    </div>
+    <p id="homeErr" class="err" role="alert"></p>
+  </section>
+</main>
+
+<main id="lobby" class="screen" hidden>
+  <section class="panel wide">
+    <header class="lobbyHead">
+      <div>
+        <p class="small">온라인 비공개 방 <span id="lobbyMode"></span></p>
+        <div class="code" id="lobbyCode"></div>
+      </div>
+      <div class="invite">
+        <input id="link" readonly aria-label="초대 링크" />
+        <button class="btn" id="copy">초대 링크 복사</button>
+      </div>
+    </header>
+    <div class="teams">
+      <div class="teamCol a"><h2>블루 팀</h2><ul id="teamA"></ul></div>
+      <div class="vs">VS</div>
+      <div class="teamCol b"><h2>오렌지 팀</h2><ul id="teamB"></ul></div>
+    </div>
+    <div id="lobbyLoadout" class="loadout"></div>
+    <footer class="lobbyFoot">
+      <button class="btn ghost" id="leave">방 나가기</button>
+      <button class="btn ghost" id="swap">팀 바꾸기</button>
+      <span class="grow" id="lobbyHint"></span>
+      <button class="btn" id="ready">준비</button>
+      <button class="btn primary" id="start" hidden>경기 시작</button>
+    </footer>
+  </section>
+</main>
+
+<div id="pause" class="overlay" hidden>
+  <section class="panel wide">
+    <h2 id="pauseTitle">일시 정지</h2>
+    <button class="btn primary big" id="resume">화면을 클릭해 계속하기</button>
+    <p class="small" id="loadoutNote"></p>
+    <div id="pauseLoadout" class="loadout"></div>
+    <div class="settings" id="settingsInline"></div>
+    <p class="small keys">WASD 이동 · Space 점프 · Shift 질주 · 좌클릭 공격 · 우클릭 조준 · R 재장전 · 1 2 3 장비 · F 살펴보기 · B 장비 변경</p>
+    <button class="btn ghost" id="quit">경기에서 나가기</button>
+  </section>
+</div>
+
+<div id="settingsDlg" class="overlay" hidden>
+  <section class="panel">
+    <h2>설정</h2>
+    <div class="settings" id="settingsHome"></div>
+    <button class="btn primary" id="closeSettings">닫기</button>
+  </section>
+</div>
+
+<main id="result" class="screen" hidden>
+  <section class="panel wide">
+    <h2 id="resTitle"></h2>
+    <p id="resSub" class="small"></p>
+    <div class="finalScore"><span class="a" id="resA"></span><i>:</i><span class="b" id="resB"></span></div>
+    <table id="resTable"><thead><tr><th>플레이어</th><th>처치</th><th>탈락</th><th>준 피해</th><th>재대결</th></tr></thead><tbody></tbody></table>
+    <footer class="lobbyFoot">
+      <button class="btn ghost" id="resLobby">로비로 돌아가기</button>
+      <span class="grow" id="resHint"></span>
+      <button class="btn primary" id="rematch">같은 멤버로 재대결</button>
+    </footer>
+  </section>
+</main>
+
+<div id="toast" role="status"></div>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>
