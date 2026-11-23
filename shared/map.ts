@@ -1,4 +1,4 @@
-// 첫 맵 "토이 야드". 점대칭(180도 회전) 구조라 양 팀 동선 길이가 같다.
+// 첫 맵 "화물 창고". 점대칭(180도 회전) 구조라 양 팀 동선 길이가 같다.
 // x: 팀 진영 방향(-22 블루 ~ +22 오렌지), z: 북(-15, 민트 길) ~ 남(+15, 라일락 길)
 
 export interface Box { min: [number, number, number]; max: [number, number, number]; color: number }
