@@ -350,7 +350,8 @@ export class Game {
         r.dead = Math.min(1, r.dead + dt / 0.5);
         const k = r.dead * r.dead;
         r.av.root.rotation.x = k * 1.5; r.av.root.position.y = r.pos.y + k * 0.16;
-        r.av.armR.rotation.x = 0.4; r.av.armL.rotation.x = -0.3; r.av.legL.rotation.x = 0.15; r.av.legR.rotation.x = -0.1;
+        r.av.armR.rotation.set(0.4, 0, -0.3); r.av.armL.rotation.set(-0.3, 0, 0.3); r.av.foreR.rotation.x = 0.3; r.av.foreL.rotation.x = 0.2;
+        r.av.legL.rotation.x = 0.15; r.av.legR.rotation.x = -0.1; r.av.shinL.rotation.x = -0.2; r.av.shinR.rotation.x = -0.05;
         continue;
       }
       r.dead = 0; r.av.root.rotation.x = 0;
@@ -366,17 +367,23 @@ export class Game {
       av.root.position.copy(r.pos); av.root.rotation.y = r.yaw;
       r.walk += dt * Math.min(sp, 9) * 1.5;
       const sw = Math.sin(r.walk) * Math.min(1, sp / 4) * 0.7;
-      av.legL.rotation.x = sw; av.legR.rotation.x = -sw; av.armL.rotation.x = -sw * 0.6;
+      av.legL.rotation.x = sw; av.legR.rotation.x = -sw;
+      av.shinL.rotation.x = -(0.08 + Math.max(0, -sw) * 1.3); av.shinR.rotation.x = -(0.08 + Math.max(0, sw) * 1.3); // 뒤로 차는 다리는 무릎을 접는다
       av.head.rotation.x = r.pitch * 0.6;
       r.swing += dt; r.kick = Math.max(0, r.kick - dt * 9); r.inspect = Math.max(0, r.inspect - dt);
       const melee = WEAPONS[r.wid]?.kind === 'melee';
-      let arm = Math.PI / 2 + r.pitch + r.kick * 0.25; // 팔을 앞으로 뻗어 조준 방향을 따라간다
+      const aim = Math.PI / 2 + r.pitch;
       if (melee) {
-        arm = 0.9 + r.pitch * 0.6;
-        if (r.swing < 0.4) { const u = r.swing / 0.4; arm += Math.sin(Math.min(1, u * 2.2) * Math.PI) * 1.3; av.armR.rotation.z = Math.sin(u * Math.PI) * 0.6; } else av.armR.rotation.z = 0;
-      } else av.armR.rotation.z = 0;
-      if (r.inspect > 0) av.armR.rotation.z = Math.sin(r.inspect * 12) * 0.35;
-      av.armR.rotation.x = arm;
+        let a = 0.55 + r.pitch * 0.6, z = 0;
+        if (r.swing < 0.4) { const u = r.swing / 0.4; a += Math.sin(Math.min(1, u * 2.2) * Math.PI) * 1.2; z = Math.sin(u * Math.PI) * 0.6; }
+        av.armR.rotation.set(a, 0, z - 0.1); av.foreR.rotation.x = 0.95;
+        av.armL.rotation.set(0.35 - sw * 0.5, 0, 0.15); av.foreL.rotation.x = 0.7;
+      } else {
+        // 오른팔: 팔꿈치를 접어 총을 가슴 높이로, 아래팔이 조준 방향을 따른다. 왼팔은 총열 쪽을 받친다.
+        av.armR.rotation.set(aim - 1.0 + r.kick * 0.08, 0, -0.1); av.foreR.rotation.x = 1.0;
+        av.armL.rotation.set(aim - 0.45, 0, 0.62); av.foreL.rotation.x = 0.5;
+      }
+      if (r.inspect > 0) av.armR.rotation.z += Math.sin(r.inspect * 12) * 0.3;
     }
   }
 

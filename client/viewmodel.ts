@@ -188,13 +188,13 @@ function gunRig(id: string, sleeve: number): Rig {
     return wrap;
   };
   const rh = mk(false); rh.position.copy(m.grip); rh.rotation.x = 0.25;
-  const lh = mk(true); lh.rotation.set(0.2, 0, -0.5);
+  const lh = mk(true); lh.rotation.set(0.8, -0.5, -0.25); // 왼팔은 아래·왼쪽에서 올라와 총열 덮개를 받친다
   const lRest = m.fore ? m.fore.clone() : new THREE.Vector3(-0.05, -0.4, 0.05);
   const magHome = m.mag ? m.mag.position.clone() : new THREE.Vector3(0, -0.06, -0.08);
   const actHome = m.action ? m.action.position.clone() : null;
   const muzzle = new THREE.Group(); muzzle.position.copy(m.muzzle); g.add(muzzle);
   const primary = cfg.slot === 0;
-  const idle = primary ? P(0.17, -0.175, -0.6, 0, 0.06, 0) : P(0.16, -0.15, -0.5, 0, 0.05, 0);
+  const idle = primary ? P(0.2, -0.195, -0.58, 0.02, 0.1, 0) : P(0.17, -0.155, -0.5, 0.02, 0.07, 0);
   const apply = (p: Pose) => {
     g.position.set(p[0], p[1], p[2]); g.rotation.set(p[3], p[4], p[5]);
     if (m.mag) m.mag.position.set(magHome.x, magHome.y - p[14] * 0.24, magHome.z);
