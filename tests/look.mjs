@@ -1,0 +1,26 @@
+// 화면 확인용: 홈, 경기 중(상대가 보이는 장면), 로비
+import { launch, URL, sleep } from './lib.mjs';
+const b = await launch();
+const mk = async () => (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+const A = await mk(); await A.goto(URL); await sleep(2500);
+await A.screenshot({ path: 'tests/shots/r_home.jpg', type: 'jpeg', quality: 80 });
+await A.fill('#nick', '알파'); await A.click('#create'); await A.waitForSelector('#lobby:not([hidden])');
+const link = await A.inputValue('#link');
+const B = await mk(); await B.goto(link + '&fx=low'); await B.fill('#nick', '브라보'); await B.click('#joinInvite'); await B.waitForSelector('#lobby:not([hidden])');
+await sleep(300); await A.screenshot({ path: 'tests/shots/r_lobby.jpg', type: 'jpeg', quality: 80 });
+await A.click('#ready'); await B.click('#ready'); await sleep(400); await A.click('#start');
+const S = (p) => p.evaluate(() => window.__snap.debugState());
+const set = (p, o) => p.evaluate((o) => { const g = window.__snap; g.dbg.on = true; Object.assign(g.dbg, o.dbg ?? {}); if (o.yaw !== undefined) g.yaw = o.yaw; if (o.pitch !== undefined) g.pitch = o.pitch; document.getElementById('pause').hidden = true; }, o);
+const until = async (fn, ms) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await sleep(80); } return false; };
+await until(async () => (await S(A)).phase === 'live', 9000); await set(A, {}); await set(B, {});
+const go = (p, x, z) => until(async () => { const s = await S(p); const dx = x - s.x, dz = z - s.z; if (Math.hypot(dx, dz) < 0.5) { await set(p, { dbg: { f: 0 } }); return true; } await set(p, { yaw: Math.atan2(-dx, -dz), pitch: 0, dbg: { f: 1, sprint: true } }); return false; }, 30000);
+await Promise.all([(async () => { for (const pt of [[-17.6, -5.8], [-12, -5.8], [-4, -5]]) await go(A, ...pt); })(), (async () => { for (const pt of [[17.6, 5.8], [12, 5.8], [12, -5], [1.5, -4.6]]) await go(B, ...pt); })()]);
+await sleep(500);
+const a = await S(A), t = a.remotes[0];
+await set(A, { yaw: Math.atan2(-(t.x - a.x), -(t.z - a.z)) + 0.12, pitch: -0.03 });
+await set(B, { yaw: Math.atan2(-(a.x - t.x), -(a.z - t.z)), pitch: 0 }); await sleep(900);
+await A.screenshot({ path: 'tests/shots/r_game.jpg', type: 'jpeg', quality: 82 });
+await set(A, { yaw: -Math.PI / 2 - 0.5, pitch: 0.05 }); await sleep(700);
+await A.screenshot({ path: 'tests/shots/r_game2.jpg', type: 'jpeg', quality: 82 });
+console.log('fps', (await S(A)).fps, 'calls', (await S(A)).calls);
+await b.close();

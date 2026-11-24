@@ -77,8 +77,9 @@ console.log('\n[장비] 총 6종과 칼 3종 수치 (연습장 표적 대상, �
     const hp1 = await hpOf(p, T), s = await S(p);
     const dealt = hp0 - hp1;
     const [dmg, mag] = expect[id];
-    ok(s.rig === id && am0 === mag && s.ammo[slot] === mag - 1 && (id === 'shotgun' ? dealt >= 60 && dealt <= 100 : Math.abs(dealt - dmg) <= 1),
-      `${id}: 탄창 ${am0}, 1발 발사 후 ${s.ammo[slot]}, 몸통 피해 ${dealt} (거리 ${dist.toFixed(1)}m, 설정값 ${dmg})`);
+    const shots = am0 - s.ammo[slot]; // 연사 총은 짧게 눌러도 프레임에 따라 2발이 나갈 수 있다
+    ok(s.rig === id && am0 === mag && shots >= 1 && shots <= (id === 'smg' || id === 'ar' ? 2 : 1) && (id === 'shotgun' ? dealt >= 60 && dealt <= 100 : Math.abs(dealt - dmg * shots) <= 1),
+      `${id}: 탄창 ${am0}, ${shots}발 발사, 몸통 피해 ${dealt} (거리 ${dist.toFixed(1)}m, 발당 설정값 ${dmg})`);
     if (id === 'ar') {
       await aim(p, T, 1.6); await sleep(700); const h0 = await hpOf(p, T);
       await set(p, { dbg: { ads: true, fire: true } }); await sleep(40); await set(p, { dbg: { ads: true, fire: false } }); await sleep(300);
